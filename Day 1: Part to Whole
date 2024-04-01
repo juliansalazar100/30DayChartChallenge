@@ -1,0 +1,149 @@
+clear
+
+cd "D:\Julian Salazar\30DayChartChallenge"
+
+local elections TrumpBiden ClintonTrump ObamaRomney ObamaMcCain
+
+foreach election in `elections' {
+    clear
+    local filename "D:\Julian Salazar\30DayChartChallenge\\`election'.txt"
+    import delimited "`filename'"
+    
+    gen income_level = .
+    sum coninc, detail
+    return list
+    
+    replace income_level = 1 if coninc <= r(p25)
+    replace income_level = 2 if coninc > r(p25) & coninc <= r(p50)
+    replace income_level = 3 if coninc > r(p50) & coninc <= r(p75)
+    replace income_level = 4 if coninc > r(p75)
+    
+    label define income_level 1 "Low Income" 2 "Lower Middle Income" 3 "Upper Middle Income" 4 "High Income"
+    label values income_level income_level
+    
+    gen new_race = 3
+    replace new_race = 1 if hispanic == 1 & race == 1
+    replace new_race = 2 if hispanic == 1 & race == 2
+    replace new_race = 4 if hispanic == 1 & race == 3
+    
+    label define new_race 1 "White" 2 "Black" 3 "Hispanic" 4 "Other"
+    label values new_race new_race
+    
+    local year
+    if "`election'" == "TrumpBiden" local year = 2020
+    else if "`election'" == "ClintonTrump" local year = 2016
+    else if "`election'" == "ObamaRomney" local year = 2012
+    else if "`election'" == "ObamaMcCain" local year = 2008
+	
+	
+	local pres_year
+	if "`election'" == "TrumpBiden" local pres_year = "pres20"
+	else if "`election'" == "ClintonTrump" local pres_year = "pres16"
+	else if "`election'" == "ObamaRomney" local pres_year = "pres12"
+	else if "`election'" == "ObamaMcCain" local pres_year = "pres08"
+	
+	keep if `pres_year' == 1 | `pres_year' == 2
+	
+	if "`election'" == "TrumpBiden" {
+    label define pres20 1 "Biden" 2 "Trump"
+	label values pres20 pres20
+	}
+	else if "`election'" == "ClintonTrump" {
+		label define pres16 1 "Clinton" 2 "Trump"
+		label values pres16 pres16
+	}
+	else if "`election'" == "ObamaRomney" {
+		label define pres12 1 "Obama" 2 "Romney"
+		label values pres12 pres12
+	}
+	else if "`election'" == "ObamaMcCain" {
+    label define pres08 1 "Obama" 2 "McCain"
+	label values pres08 pres08
+}
+
+	graph set window fontface "Candara Light"	
+	
+	*By Race
+	
+	colorpalette ///
+	"49 56 193" ///
+	"67 85 252" ///
+	"237 68 74" ///
+	"234 153 147" ///
+	, nograph
+		
+	graph hbar, over(new_race) over(`pres_year', label(angle(vertical))) ///
+	l2title("{fontface Merriweather:`year'}", orientation(vertical) box bexpand fcolor("`r(p1)'") color(white)) ///
+	percentage ///
+	ylab(0(25)100, angle(horizontal) valuelabel) ///
+	ytitle(Percent) ///
+	stack ///
+	asyvars ///
+	blabel(bar, pos(center) format(%9.1f) size(vsmall) color(white)) ///
+	graphregion(margin(vsmall)) ///
+	scheme(white_tableau) ///
+	name(`election'_Race, replace) ///
+	saving(`election'_Race, replace) ///
+	bar(1, fcolor("`r(p1)'") lcolor(black) lwidth(0)) ///
+	bar(2, fcolor("`r(p2)'") lcolor(black) lwidth(0)) ///
+	bar(3, fcolor("`r(p3)'") lcolor(black) lwidth(0)) ///
+	bar(4, fcolor("`r(p4)'") lcolor(black) lwidth(0)) ///
+legend(pos(6) row(1) size(small)) ///title("{fontface Merriweather Italic:Race}", size(small) box fcolor("`r(p1)'"%75) color(white) span bexpand)) 
+	
+	*By Race and Income Level
+	
+	colorpalette ///
+	"49 56 193" ///
+	"67 85 252" ///
+	"237 68 74" ///
+	"234 153 147" ///
+	, nograph
+
+	graph hbar, over(income_level) over(new_race) over(`pres_year', label(angle(vertical))) ///
+	percentage ///
+	ytitle(Percent) ///
+	ylab(0(25)100, angle(horizontal) valuelabel) ///
+	stack ///
+	asyvars ///
+	blabel(bar, pos(center) format(%9.1f) size(vsmall) color(white)) ///
+	scheme(white_tableau) ///
+	l2title("{fontface Merriweather Bold:`year'}", orientation(vertical) box bexpand fcolor("`r(p1)'") color(white)) ///
+	graphregion(margin(vsmall)) ///
+	name(`election'_IncomeRace, replace) ///
+	saving(`election'_IncomeRace, replace) ///
+	bar(1, fcolor("`r(p1)'") lcolor(black) lwidth(0)) ///
+	bar(2, fcolor("`r(p2)'") lcolor(black) lwidth(0)) ///
+	bar(3, fcolor("`r(p3)'") lcolor(black) lwidth(0)) ///
+	bar(4, fcolor("`r(p4)'") lcolor(black) lwidth(0)) ///
+legend(pos(6) row(1) size(small)) ///title("{fontface Merriweather Italic:Income Status}", size(small) box fcolor("`r(p1)'"%75) color(white) span bexpand)) 
+	
+}
+
+colorpalette ///
+"49 56 193" ///
+"67 85 252" ///
+"237 68 74" ///
+"234 153 147" ///
+, nograph
+
+grc1leg "TrumpBiden_IncomeRace.gph" "ClintonTrump_IncomeRace.gph" "ObamaRomney_IncomeRace.gph" "ObamaMcCain_IncomeRace.gph", ///
+ legendfrom("TrumpBiden_IncomeRace.gph") ///
+ name(graph1, replace) ///
+ saving(graph1, replace) ///
+ title("{fontface Merriweather Bold:US Electoral trends: Relation between Race & Income Status (2008-2020)}", box pos(11) fcolor("`r(p1)'") color(white) lwidth(0) size(medium)) ///
+ note("{fontface Merriweather Bold Italic:Day 1: Part-to-whole}", box pos(5) fcolor("`r(p1)'") color(white) lwidth(0) size(medium))
+ 
+colorpalette ///
+"49 56 193" ///
+"67 85 252" ///
+"237 68 74" ///
+"234 153 147" ///
+, nograph
+
+grc1leg "TrumpBiden_Race.gph" "ClintonTrump_Race.gph" "ObamaRomney_Race.gph" "ObamaMcCain_Race.gph", ///
+ legendfrom("TrumpBiden_Race.gph") ///
+ name(graph2, replace) ///
+ saving(graph2, replace) ///
+ title("{fontface Merriweather Bold:US Electoral trends: Composition of Race (2008-2020)}", box pos(11) fcolor("`r(p1)'") color(white) lwidth(0) size(medium)) ///
+ note("{fontface Merriweather Bold Italic:Day 1: Part-to-whole}", box pos(5) fcolor("`r(p1)'") color(white) lwidth(0) size(medium))
+ 
