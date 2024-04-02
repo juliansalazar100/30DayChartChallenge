@@ -1,6 +1,7 @@
 
-/****** separate natives from recent immigrants (who arrived since the last census) 
-and old immigrants (who arrived before previous census) **********/
+/*
+To download the dta file I used, refer to this link: https://drive.google.com/file/d/1wsFzTtyAtt1zzuqA4GYrTLu9g0bhIlJa/view?usp=sharing
+*/
 
 
 cd "D:\Julian Salazar\30DayChartChallenge\Day 2"
