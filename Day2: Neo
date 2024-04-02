@@ -56,8 +56,6 @@ foreach year in `years' {
 	gen old_foreign_income=old_foreign*incwage*perwt
 	gen native_income=(1-foreign)*incwage*perwt
 	
-	
-	/* merge with the task variables */
 	keep perwt howo new_foreign_howo old_foreign_howo native_howo new_foreign_empl old_foreign_empl native_empl new_foreign_income old_foreign_income native_income statefip
 	sort statefip
 	collapse (sum) new_foreign_empl old_foreign_empl native_empl new_foreign_howo old_foreign_howo native_howo new_foreign_income old_foreign_income native_income, by(statefip)
