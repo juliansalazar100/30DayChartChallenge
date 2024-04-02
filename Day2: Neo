@@ -1,0 +1,156 @@
+
+/****** separate natives from recent immigrants (who arrived since the last census) 
+and old immigrants (who arrived before previous census) **********/
+
+
+cd "D:\Julian Salazar\30DayChartChallenge\Day 2"
+clear
+
+
+**********************************Loop**************************************
+
+clear
+
+local years 2022
+
+foreach year in `years' { 
+    local filename "D:\Julian Salazar\30DayChartChallenge\Day 2\IPUMS`year'.dta"
+    
+    use "`filename'"
+	/* eliminate people in group quarters */
+	drop if gq ==0 | gq==3 |gq==4
+	
+	/* select people in working age */
+	drop if age<18 | age>65  
+	/* select people who worked a positive amount of hours/weeks */
+	drop if wkswork2==0  
+	drop if uhrswork==0
+	
+	/* select HS or less using the variable educ */
+	drop if educ>6
+	
+	
+	generate weeks=6.5*(wkswork2==1) + 20*(wkswork2==2) + 33*(wkswork2==3) + 43.5*(wkswork2==4) + 48.5*(wkswork2==5) + 51*(wkswork2==6) 
+	generate hours=uhrswork
+	
+	* foreign-born/including US citizens born abroad;
+	generate byte foreign=(citizen==2 | citizen==3)
+	
+	/** new immigrants, i.e. those in the country for 10 years or less **/
+	gen byte new=(yrimmig==(`year'-10)|yrimmig==(`year'-9)|yrimmig==(`year'-8)|yrimmig==(`year'-7)|yrimmig==(`year'-6)|yrimmig==(`year'-5)|yrimmig==(`year'-4)|yrimmig==(`year'-3)|yrimmig==(`year'-2)|yrimmig==(`year'-1))
+	gen new_foreign=new*foreign
+	gen old_foreign=(1-new)*foreign
+	
+	/** define hours worked per person inclusive of weight**/
+	gen howo=perwt*weeks*hours
+	
+	gen new_foreign_howo=new_foreign*howo
+	gen old_foreign_howo=old_foreign*howo
+	gen native_howo=(1-foreign)*howo
+	
+	gen new_foreign_empl=new_foreign*perwt
+	gen old_foreign_empl=old_foreign*perwt
+	gen native_empl=(1-foreign)*perwt
+	
+	gen new_foreign_income=new_foreign*incwage*perwt
+	gen old_foreign_income=old_foreign*incwage*perwt
+	gen native_income=(1-foreign)*incwage*perwt
+	
+	
+	/* merge with the task variables */
+	keep perwt howo new_foreign_howo old_foreign_howo native_howo new_foreign_empl old_foreign_empl native_empl new_foreign_income old_foreign_income native_income statefip
+	sort statefip
+	collapse (sum) new_foreign_empl old_foreign_empl native_empl new_foreign_howo old_foreign_howo native_howo new_foreign_income old_foreign_income native_income, by(statefip)
+	gen year=`year'
+	save ACS_`year'_statefip, replace
+		
+}
+
+use ACS_2022_statefip, clear
+
+* Define labels for statefip
+label define statefip_label 1 "Alabama" 2 "Alaska" 4 "Arizona" 5 "Arkansas" ///
+                            6 "California" 8 "Colorado" 9 "Connecticut" ///
+                            10 "Delaware" 11 "District of Columbia" ///
+                            12 "Florida" 13 "Georgia" 15 "Hawaii" ///
+                            16 "Idaho" 17 "Illinois" 18 "Indiana" ///
+                            19 "Iowa" 20 "Kansas" 21 "Kentucky" ///
+                            22 "Louisiana" 23 "Maine" 24 "Maryland" ///
+                            25 "Massachusetts" 26 "Michigan" 27 "Minnesota" ///
+                            28 "Mississippi" 29 "Missouri" 30 "Montana" ///
+                            31 "Nebraska" 32 "Nevada" 33 "New Hampshire" ///
+                            34 "New Jersey" 35 "New Mexico" 36 "New York" ///
+                            37 "North Carolina" 38 "North Dakota" ///
+                            39 "Ohio" 40 "Oklahoma" 41 "Oregon" ///
+                            42 "Pennsylvania" 44 "Rhode Island" ///
+                            45 "South Carolina" 46 "South Dakota" ///
+                            47 "Tennessee" 48 "Texas" 49 "Utah" ///
+                            50 "Vermont" 51 "Virginia" 53 "Washington" ///
+                            54 "West Virginia" 55 "Wisconsin" ///
+                            56 "Wyoming"
+
+* Apply labels to statefip
+label values statefip statefip_label
+
+tab statefip
+
+
+********************************Figure States Comparison
+
+ /*Figure: Comparison of Migrants and Natives among States */
+ 
+gen new_foreign_percapita=(new_foreign_income/new_foreign_empl)/1000
+gen old_foreign_percapita=(old_foreign_income/old_foreign_empl)/1000
+gen native_percapita=(native_income/native_empl)/1000
+
+gen diff=abs(old_foreign_percapita-native_percapita)+abs(new_foreign_percapita-old_foreign_percapita)
+
+egen rank=rank(-diff)
+
+**
+
+graph set window fontface "Candara Light"	
+
+colorpalette ///
+	"230 202 92" ///
+	"230 92 92" ///
+	"230 147 92" ///
+	, nograph
+
+graph dot new_foreign_percapita old_foreign_percapita native_percapita if rank >= 1 & rank <= 25, over(statefip, sort(diff) descending) ///
+ndots(50) dots(mcolor("`r(p3)'")) ///
+legend(order(3 "Natives" 1 "Old Immigrants" 2 "New Immigrants")) ///
+name(percapita1, replace) ///
+saving(percapita1, replace) ///
+ylab(0(10)50, angle(horizontal)) ///
+marker(1, mcolor("`r(p1)'") msymbol(plus)) ///
+marker(2, mcolor("`r(p2)'") msymbol(triangle_hollow)) ///
+marker(3, mcolor("`r(p3)'") msymbol(circle_hollow)) ///
+scheme(black_tableau) 
+
+colorpalette ///
+	"230 202 92" ///
+	"230 92 92" ///
+	"230 147 92" ///
+	, nograph
+
+graph dot new_foreign_percapita old_foreign_percapita native_percapita if rank>25, over(statefip, sort(diff) descending) ndots(50) dots(mcolor("`r(p3)'")) ///
+legend(order(3 "Natives" 1 "Old Immigrants" 2 "New Immigrants")) ///
+name(percapita2, replace) ///
+saving(percapita2, replace) ///
+ylab(0(10)50, angle(horizontal)) ///
+marker(1, mcolor("`r(p1)'") msymbol(plus)) ///
+marker(2, mcolor("`r(p2)'") msymbol(triangle_hollow)) ///
+marker(3, mcolor("`r(p3)'") msymbol(circle_hollow)) ///
+scheme(black_tableau) 
+
+grc1leg2 percapita1 percapita2, pos(6) ///
+ lcol(3) ///
+ title("{fontface Merriweather Bold: Wage Income Per Capita (Current US Dollars in Thousands: Year 2021)}", size(Medium) pos(11) span) ///
+ subtitle("{fontface Merriweather Italic: Comparison between New Migrants, Old Migrants & Natives [Ranked in descending order by wage gap]}", size(small) pos(11) span) ///
+ note("{fontface Merriweather Bold:Day 2: Neo}", pos(5) lwidth(0) size(medium)) ///
+ xcommon ///
+ scheme(black_tableau) ///
+ name(Day2, replace) 
+ 
+**
