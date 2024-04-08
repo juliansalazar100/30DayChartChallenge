@@ -1,0 +1,102 @@
+*Poblacion
+
+clear
+
+cd "D:\Julian Salazar\30DayChartChallenge\Day 5"
+
+import delimited "D:\Julian Salazar\30DayChartChallenge\Day 5\Proyección para 2023 con base en el Censo de Población de 2018 - Colombia.csv"
+
+drop total
+
+sort departamento
+
+drop if departamento == "Total"
+
+gen id=_n
+
+save Poblacion, replace 
+
+*************************************************************************
+
+*Homicidios
+
+clear
+
+import excel "D:\Julian Salazar\30DayChartChallenge\Day 5\homicidio_intencional_8.xlsx", sheet("Sheet1") cellrange(A10:H11336) firstrow
+
+replace DEPARTAMENTO="BOGOTÁ" if MUNICIPIO=="Bogotá D.C. (CT)"
+
+replace DEPARTAMENTO="La Guajira" if DEPARTAMENTO=="GUAJIRA"
+insobs 1
+replace DEPARTAMENTO="Guainía" if DEPARTAMENTO==""
+
+gen Mujeres_asesinatos=.
+replace Mujeres_asesinatos=CANTIDAD if GENERO=="FEMENINO"
+
+gen Hombres_asesinatos=.
+replace Hombres_asesinatos=CANTIDAD if GENERO=="MASCULINO"
+
+collapse (sum) Mujeres_asesinatos Hombres_asesinatos, by(DEPARTAMENTO)
+
+*insobs 1
+
+*replace DEPARTAMENTO="TOTAL" if DEPARTAMENTO==""
+
+
+/// * Calculate the sum of MUJERES and HOMBRES
+*egen TOTAL_MUJERES = total(Mujeres_asesinatos)
+*egen TOTAL_HOMBRES = total(Hombres_asesinatos)
+*
+*/// * Assign the sum of MUJERES and HOMBRES to the new observation
+*replace Mujeres_asesinatos = TOTAL_MUJERES if Mujeres_asesinatos==.
+*replace Hombres_asesinatos = TOTAL_HOMBRES if Hombres_asesinatos==.
+*
+*drop TOTAL_MUJERES
+*drop TOTAL_HOMBRES
+
+replace DEPARTAMENTO="Guaviare" if DEPARTAMENTO=="GUAVIARE"
+
+sort DEPARTAMENTO
+
+gen id=_n
+
+merge 1:1 id using "D:\Julian Salazar\30DayChartChallenge\Day 5\Poblacion.dta"
+
+drop DEPARTAMENTO
+
+drop _merge
+
+gsort -id
+gen new_id=_n
+drop id
+rename new_id id
+
+gen cero=0
+
+gen tasa_mujeres=-1*(Mujeres_asesinatos/mujeres)*100000
+gen tasa_hombres=(Hombres_asesinatos/hombres)*100000
+
+graph set window fontface "Source Sans Pro"
+
+gen labels_tasa_mujeres=abs(tasa_mujeres)
+
+format labels_tasa_mujeres %6.2f
+format tasa_hombres %6.2f
+
+twoway bar tasa_mujeres id, horizontal ///
+ title("{fontface Source Sans Pro Black:Tasa de Homicidios en los Departamentos de Colombia (2023)}", pos(11) span) ///
+ subtitle("{fontface Source Sans Pro:Asesinatos por cada 100 mil habitantes de cada sexo}", pos(11) span) ///
+ scheme(swift_red) ///
+ legend(pos(6) rows(1) label(1 "Mujeres") label(2 "Hombres") label(3 "") label(4 "") label(5 "") label(6 "")) ///
+note("{fontface Source Sans Pro Black:Día 5: Divergente}", pos(5) lwidth(0) size(medium)) ///
+ylabel("", angle(0)) ///
+xlabel(-50 "50" 0 50 100 150) ///
+xline(-3.63, lcol("227 51 101"%80) lstyle(grid) lpattern(shortdash)) ///
+xline(49.22, lcol("128 128 255"%80) lstyle(grid) lpattern(shortdash)) ///
+ytitle(Departamento) ///
+bcolor("227 51 101") || /// Union
+bar tasa_hombres id, horizontal bcolor("128 128 255") || ///
+scatter id tasa_mujeres, mlabcolor("227 51 101") msymbol(i) mlabel(labels_tasa_mujeres) mlabp(9) || ///
+scatter id tasa_hombres if Hombres_asesinatos>1, mlabcolor("128 128 255") msymbol(i) mlabel(tasa_hombres) mlabp(3) || ///
+scatter id cero if departamento!="Guainía" | departamento!="Vaupés", mlabcolor(white) msymbol(i) mlabel(departamento) || ///
+scatter id cero if id==18|id==2, mlabcolor(black) msymbol(i) mlabel(departamento) 
