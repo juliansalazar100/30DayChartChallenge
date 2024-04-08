@@ -1,0 +1,39 @@
+cd "D:\Julian Salazar\30DayChartChallenge\Day 4"
+
+use "D:\Julian Salazar\30DayChartChallenge\Day 4\ViolacionesColombia.dta", clear
+
+gen id = _n
+
+ren NiñosyAdolescentesF y_ninosyadolescentesf
+ren adultosf y_adultosf
+ren NiñosyAdolescentesM y_ninosyadolescentesm
+ren adultosm y_adultosm
+ren noreportado y_noreportado
+
+reshape long y_, i(id Víctimas) j(byvar) string
+
+gen sex_age=.
+replace sex_age=1 if byvar=="adultosf"
+replace sex_age=2 if byvar=="ninosyadolescentesf"
+replace sex_age=3 if byvar=="ninosyadolescentesm"
+replace sex_age=4 if byvar=="adultosm"
+replace sex_age=5 if byvar=="noreportado"
+
+label define sex_age 1 "Adultos (F)" 2 "Niñas y Adolescentes (F)" 3 "Niños y Adolescentes (M)" 4 "Adultos (M)" 5 "No Reportado"
+label value sex_age sex_age
+
+*drop if sex_age==5
+
+graph set window fontface "Source Sans Pro"
+
+waffle y_, by(departamento) ///
+over(sex_age) ///
+percent ///
+cols(9) ///
+subtitle( , pos(12) size(4.8) nobox) ///
+palette(viridis) ///
+title("{fontface Source Sans Pro Black:Delitos Sexuales en Colombia (2023)}" "{fontface Source Sans Pro:Porcentaje de víctimas según sexo y grupo de edad}", pos(11) span) ///
+note("{fontface Source Sans Pro Black:Día 4: Waffle Chart}", pos(5) lwidth(0) size(medium)) ///
+scheme(white_tableau) ///
+legsize(2) ///
+legcolumns(5) 
