@@ -1,0 +1,87 @@
+cd "D:\Julian Salazar\30DayChartChallenge\Day 7"
+
+import delimited "D:\Julian Salazar\30DayChartChallenge\Day 7\heart_failure_clinical_records_dataset.csv", clear
+
+gen id=_n
+
+stset time, id(id) failure(death_event)
+
+*stdescribe
+
+*stvary
+
+graph set window fontface "Source Sans Pro"
+
+rename anaemia Anaemia
+
+sts graph, by(Anaemia) ci cumhaz  ///
+title(Anaemia, box bexpand bcolor(black) color(white)) ///
+xlabel(0(95)285) ///
+ylabel(0(0.2)1) ///
+ci1(color("31 119 180"%20) lwidth(0)) ///
+ci2(color("225 127 14"%20) lwidth(0)) ///
+xtitle(Days) ///
+ytitle(Hazard Function) ///
+legend(order(1 "95% CI" 2 "95% CI" 3 "State = 0" 4 "State = 1") ring(0) pos(1) region(lcolor(black) lpattern(dash))) ///
+scheme(white_tableau) name(graph1, replace)
+
+rename diabetes Diabetes
+
+sts graph, by(Diabetes) ci cumhaz  ///
+title(Diabetes, box bexpand bcolor(black) color(white)) ///
+xlabel(0(95)285) ///
+ylabel(0(0.2)1) ///
+ci1(color("31 119 180"%20) lwidth(0)) ///
+ci2(color("225 127 14"%20) lwidth(0)) ///
+xtitle(Days) ///
+ytitle(Survival Probability) ///
+legend(ring(0) pos(1) region(lcolor(black) lpattern(dash))) ///
+scheme(white_tableau) name(graph2, replace)
+
+rename high_blood_pressure Hyperthension
+
+sts graph, by(Hyperthension) ci cumhaz  ///
+title(Hyperthension, box bexpand bcolor(black) color(white)) ///
+xlabel(0(95)285) ///
+ylabel(0(0.2)1) ///
+ci1(color("31 119 180"%20) lwidth(0)) ///
+ci2(color("225 127 14"%20) lwidth(0)) ///
+xtitle(Days) ///
+ytitle(Survival Probability) ///
+legend(ring(0) pos(1) region(lcolor(black) lpattern(dash))) ///
+scheme(white_tableau) name(graph3, replace)
+
+rename sex Sex
+
+sts graph, by(Sex) ci cumhaz  ///
+title(Sex, box bexpand bcolor(black) color(white)) ///
+xlabel(0(95)285) ///
+ylabel(0(0.2)1) ///
+ci1(color("31 119 180"%20) lwidth(0)) ///
+ci2(color("225 127 14"%20) lwidth(0)) ///
+xtitle(Days) ///
+ytitle(Survival Probability) ///
+legend(ring(0) pos(1) region(lcolor(black) lpattern(dash))) ///
+scheme(white_tableau) name(graph4, replace)
+
+rename smoking Smoking
+
+sts graph, by(Smoking) ci cumhaz ///
+title(Smoking, box bexpand bcolor(black) color(white)) ///
+xlabel(0(95)285) ///
+ylabel(0(0.2)1) ///
+ci1(color("31 119 180"%20) lwidth(0)) ///
+ci2(color("225 127 14"%20) lwidth(0)) ///
+xtitle(Days) ///
+ytitle(Survival Probability) ///
+legend(ring(0) pos(1) region(lcolor(black) lpattern(dash))) ///
+scheme(white_tableau) name(graph5, replace)
+
+grc1leg2 graph1 graph2 graph3 graph4 graph5, ///
+pos(4) ring(0) lyoffset(15) ///
+title("{fontface  Merriweather Bold:Survival Analysis: Nelson-Aalen Estimator}", pos(11) span) ///
+subtitle("{fontface Merriweather:Hazard Function by Sex or Health Conditions}", pos(11) span) ///
+note("{fontface Merriweather Bold:Day 7: Hazard}", pos(5) lwidth(0) size(medium)) ///
+scheme(white_tableau)
+
+graph export "D:\Julian Salazar\30DayChartChallenge\Day 7\Day7.png", as(png) name("Graph")
