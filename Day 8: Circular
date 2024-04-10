@@ -1,0 +1,409 @@
+*ssc install schemepack, replace
+*ssc install palettes, replace
+*ssc install colrspace, replace
+
+cd "D:\Julian Salazar\30DayChartChallenge\Day 8"
+
+clear
+ 
+use "D:\Julian Salazar\30DayChartChallenge\Day 8\IPUMS2022.dta" /// data can be downloaded from https://usa.ipums.org/usa/
+/* eliminate people in group quarters */
+drop if gq ==0 | gq==3 |gq==4
+
+drop if city==0 | city==1414
+
+gen byte foreign=(citizen==2|citizen==3)
+
+gen foreign_people=foreign*perwt
+
+gen native=1-foreign
+
+gen native_people=native*perwt
+
+gen total_population=foreign_people+native_people
+
+gen byte muslim = inlist(bpl, 513, 514, 515, 516, 517, 518, 520, 521, 522, 524, 532, 534, 536, 537, 540, 541, 542, 543, 544) & foreign==1
+
+gen muslim_people=muslim*perwt
+
+gen byte asian = inlist(bpl, 500, 501, 502, 511, 512, 513, 514, 515, 516, 517, 518, 520, 521, 522, 524, 532, 534, 536, 537, 540, 541, 542, 543, 544) & muslim==0 & foreign==1
+
+gen asian_people=asian*perwt
+
+gen byte european = inlist(bpl, 403, 404, 405, 410, 411, 413, 414, 420, 421, 425, 426, 430, 433, 434, 436, 438, 450, 451, 452, 453, 454, 455, 456, 457, 461, 462, 465, 499, 500, 501, 502, 511, 512, 513, 514, 515, 516, 517, 518, 520, 521, 522, 524, 532, 534, 536, 537, 540, 541, 542, 543, 544, 599, 600, 700, 710, 950) & asian==0 & muslim==0 & foreign==1
+
+gen european_people=european*perwt
+
+generate byte hispanic=(hispan==1 | hispan==2 | hispan==3 | hispan==4) & muslim==0 & european==0 & asian==0 & foreign==1
+
+gen hispanic_people=hispanic*perwt
+
+gen other_immigrants=foreign_people-hispanic_people-muslim_people-european_people-asian_people
+
+collapse (sum) european_people muslim_people asian_people hispanic_people foreign_people total_population other_immigrants, by(city)
+
+gen immigration_rate=(foreign_people/total_population)*1000
+gen hispanic_immigration_rate=(hispanic_people/total_population)*1000
+gen european_immigration_rate=(european_people/total_population)*1000
+gen muslim_immigration_rate=(muslim_people/total_population)*1000
+gen asian_immigration_rate=(asian_people/total_population)*1000
+gen other_immigration_rate=(other_immigrants/total_population)*1000
+
+graph set window fontface "Source Sans Pro"
+
+// Define labels for identifiable cities
+label define city_labels ///
+10 "Akron, OH" ///
+50 "Albany, NY" ///
+90 "Alexandria, VA" ///
+130 "Allentown, PA" ///
+210 "Anchorage, AK" ///
+270 "Ann Arbor, MI" ///
+275 "Antioch, CA" ///
+310 "Arlington, VA" ///
+347 "Athens-Clarke County, GA" ///
+411 "Augusta-Richmond County, GA" ///
+530 "Baltimore, MD" ///
+670 "Beaumont, TX" ///
+810 "Boston, MA" ///
+830 "Bridgeport, CT" ///
+850 "Brockton, MA" ///
+890 "Buffalo, NY" ///
+930 "Cambridge, MA" ///
+1000 "Cape Coral, FL" ///
+1150 "Chesapeake, VA" ///
+1190 "Chicago, IL" ///
+1330 "Cleveland, OH" ///
+1430 "Columbus, GA" ///
+1520 "Corpus Christi, TX" ///
+1710 "Denver, CO" ///
+1750 "Detroit, MI" ///
+1800 "Downey, CA" ///
+1910 "East Los Angeles, CA" ///
+2050 "Elizabeth, NJ" ///
+2490 "Glendale, CA" ///
+2530 "Grand Rapids, MI" ///
+2550 "Green Bay, WI" ///
+2650 "Hampton, VA" ///
+2710 "Hartford, CT" ///
+2990 "Indianapolis, IN" ///
+3010 "Inglewood, CA" ///
+3110 "Jacksonville, FL" ///
+3150 "Jersey City, NJ" ///
+3250 "Kansas City, KS" ///
+3480 "Laredo, TX" ///
+3590 "Lexington-Fayette, KY" ///
+3630 "Lincoln, NE" ///
+3650 "Little Rock, AR" ///
+3690 "Long Beach, CA" ///
+3730 "Los Angeles, CA" ///
+3770 "Lowell, MA" ///
+3810 "Lynn, MA" ///
+3830 "Macon, GA" ///
+3910 "Manchester, NH" ///
+4050 "Mesa, AZ" ///
+4090 "Metairie, LA" ///
+4110 "Miami, FL" ///
+4130 "Milwaukee, WI" ///
+4150 "Minneapolis, MN" ///
+4250 "Montgomery, AL" ///
+4410 "Nashville-Davidson, TN" ///
+4530 "New Haven, CT" ///
+4570 "New Orleans, LA" ///
+4610 "New York, NY" ///
+4630 "Newark, NJ" ///
+4750 "Newport News, VA" ///
+4810 "Norfolk, VA" ///
+4930 "Oakland, CA" ///
+5150 "Pasadena, CA" ///
+5210 "Paterson, NJ" ///
+5330 "Philadelphia, PA" ///
+5350 "Phoenix, AZ" ///
+5370 "Pittsburgh, PA" ///
+5450 "Pomona, CA" ///
+5530 "Portland, OR" ///
+5650 "Providence, RI" ///
+5710 "Quincy, MA" ///
+5770 "Rancho Cucamonga, CA" ///
+5870 "Richmond, VA" ///
+5930 "Rochester, NY" ///
+5995 "Roseville, CA" ///
+6090 "Saint Louis, MO" ///
+6110 "Saint Paul, MN" ///
+6190 "Salinas, CA" ///
+6210 "Salt Lake City, UT" ///
+6290 "San Francisco, CA" ///
+6340 "Santa Clarita, CA" ///
+6430 "Seattle, WA" ///
+6500 "Simi Valley, CA" ///
+6530 "Sioux Falls, SD" ///
+6670 "Springfield, MA" ///
+6750 "Sterling Heights, MI" ///
+6850 "Syracuse, NY" ///
+6870 "Tacoma, WA" ///
+6970 "Toledo, OH" ///
+6990 "Topeka, KS" ///
+7130 "Virginia Beach, VA" ///
+7140 "Visalia, CA" ///
+7180 "Warren, MI" ///
+7230 "Washington, DC" ///
+7250 "Waterbury, CT" ///
+7570 "Worcester, MA" ///
+7590 "Yonkers, NY"
+
+// Apply the labels to the city variable
+label values city city_labels
+
+// Generate the Region variable
+gen Region = ""
+
+replace Region = "Northeast" if ///
+    inlist(city, ///
+    50 , ///
+        130, ///
+        810, ///
+        830, ///
+        850, ///
+        890, ///
+        930, ///
+       2050, ///
+       2710, ///
+       3150, ///
+       3770, ///
+       3810, ///
+       3910, ///
+       4530, ///
+       4610, ///
+       4630, ///
+       5210, ///
+       5330, ///
+       5370, ///
+       5650, ///
+       5710, ///
+       5930, ///
+       6670, ///
+       6850, ///
+       7250, ///
+       7570, ///
+       7590)
+ 
+replace Region = "Midwest" if ///
+    inlist(city, ///
+               10, ///
+        270, ///
+       1190, ///
+       1330, ///
+       1750, ///
+       2530, ///
+       2550, ///
+       2990, ///
+       3250, ///
+       3630, ///
+       4130, ///
+       4150, ///
+       6090, ///
+       6110, ///
+       6530, ///
+       6750, ///
+       6970, ///
+       6990, ///
+       7180)  
+	   
+replace Region = "Southeast" if ///
+    inlist(city, ///
+	     90, ///
+        310, ///
+        347, ///
+        411, ///
+        530, ///
+       1000, ///
+       1150, ///
+       1430, ///
+       2650, ///
+       3110, ///
+       3590, ///
+       3830, ///
+       4110, ///
+       4250, ///
+       4410, ///
+       4750, ///
+       4810, ///
+       5870, ///
+       7130, ///
+       7230)
+
+replace Region = "Southwest" if ///
+    inlist(city, 670, 1520, 3480, 3650, 4090, 4570)
+
+replace Region = "West" if ///
+    inlist(city, ///	
+        210, ///
+        275, ///
+       1710, ///
+       1800, ///
+       1910, ///
+       2490, ///
+       3010, ///
+       3690, ///
+       3730, ///
+       4050, ///
+       4930, ///
+       5150, ///
+       5350, ///
+       5450, ///
+       5530, ///
+       5770, ///
+       5995, ///
+       6190, ///
+       6210, ///
+       6290, ///
+       6340, ///
+       6430, ///
+       6500, ///
+       6870, ///
+       7140)
+
+	
+sort Region immigration_rate
+
+**** Ploting the circle
+
+*The overall immigration rate is the sum of the immigration_rate of europeans, hispanics, muslims, or other categories that the researcher wants to define. 
+*That's how I made the stack bars "percent" for the circle plot
+
+
+cap drop angle
+
+gen double angle=_n*2*_pi /_N
+
+summarize immigration_rate, detail
+
+global circ = `r(p99)'
+
+// points in the circle
+gen double xcir = ($circ * cos(angle))
+gen double ycir = ($circ * sin(angle))
+// height of bars
+gen double xval4 = ((other_immigration_rate + $circ ) * cos(angle)) 
+gen double yval4 = ((other_immigration_rate + $circ ) * sin(angle))
+
+gen double xval3 = (( asian_immigration_rate + other_immigration_rate + $circ ) * cos(angle)) 
+gen double yval3 = (( asian_immigration_rate + other_immigration_rate + $circ ) * sin(angle))
+
+gen double xval2 = ((muslim_immigration_rate+asian_immigration_rate + other_immigration_rate + $circ ) * cos(angle)) 
+gen double yval2 = ((muslim_immigration_rate+asian_immigration_rate + other_immigration_rate + $circ ) * sin(angle))
+
+gen double xval1 = ((european_immigration_rate+muslim_immigration_rate+asian_immigration_rate + other_immigration_rate  + $circ ) * cos(angle)) 
+gen double yval1 = ((european_immigration_rate+muslim_immigration_rate+asian_immigration_rate + other_immigration_rate  + $circ ) * sin(angle))
+
+gen double xval = ((hispanic_immigration_rate+european_immigration_rate+muslim_immigration_rate+asian_immigration_rate + other_immigration_rate + $circ ) * cos(angle)) 
+gen double yval = ((hispanic_immigration_rate+european_immigration_rate+muslim_immigration_rate+asian_immigration_rate + other_immigration_rate + $circ ) * sin(angle))
+  
+ *** Adjust the shape of the circle
+
+summarize xval
+ local xmax = `r(max)'
+ local xmin = `r(min)'
+ 
+summarize yval
+ local ymax = `r(max)'
+ local ymin = `r(min)'
+ 
+global edge = max(`xmax',`ymax', abs(`xmin'), abs(`ymin')) * 1.1
+
+  
+ *** Generate City Labels for Chart
+ 
+cap drop xlab ylab 
+
+gen xlab =((immigration_rate+$circ * 1.3) * cos(angle))
+gen ylab =((immigration_rate+$circ * 1.3) * sin(angle))
+
+
+sum immigration_rate, detail
+
+decode city, gen(city_label)
+
+cap drop mylab
+gen mylab = city_label + " (" + string(immigration_rate, "%8.0f") + ")" if immigration_rate >= `r(p25)'
+
+*** Adjust Angle for the labels
+  
+  cap drop quad
+gen quad = .  // quadrants
+ replace quad = 1 if xcir >= 0 & ycir >= 0 
+ replace quad = 2 if xcir <= 0 & ycir >= 0   
+ replace quad = 3 if xcir <= 0 & ycir <= 0
+ replace quad = 4 if xcir >= 0 & ycir <= 0
+ 
+ cap drop angle2 
+gen double angle2 = .
+ replace angle2 = (angle  * (180 / _pi)) - 180 if angle >  _pi & !inlist(quad,2,4)
+ replace angle2 = (angle  * (180 / _pi))       if angle <= _pi & !inlist(quad,2,4)
+ replace angle2 = (angle  * (180 / _pi)) - 180 if angle <= _pi & quad==2
+ replace angle2 = (angle  * (180 / _pi))       if angle >  _pi & quad==4
+ 
+ **Spikes
+ 
+ local labs2
+qui levelsof mylab , local(lvls)  //
+foreach x of local lvls {
+ 
+ qui summ angle2 if mylab== "`x'" 
+ 
+ local labs2 `labs2' (scatter ylab xlab if mylab== "`x'"  , mc(none) mlabel(mylab) mlabangle(`r(mean)')  mlabpos(0) mlabcolor() mlabsize(1))  
+} 
+
+ **Region Names
+ 
+ cap drop tag
+ egen tag = tag(Region)
+ recode tag (0=.)
+ ** generate the variables
+ cap drop *Reg
+ gen double xReg     = .
+ gen double yReg    = .
+ gen double angleReg = .
+ ** generate the angles
+ levelsof Region if tag==1, local(lvls)
+ foreach x of local lvls {
+ qui summ angle if Region== "`x'"
+ 
+ replace angleReg = (`r(max)' + `r(min)') / 2 if tag==1 & Region== "`x'"
+ replace xReg = ($circ * 0.9 * cos(angleReg)) if tag==1 & Region== "`x'"
+ replace yReg = ($circ * 0.9 * sin(angleReg)) if tag==1 & Region== "`x'"
+ }
+ 
+ replace angleReg = (angleReg  * (180 / _pi)) - 90  if tag==1
+ 
+ local labReg
+levelsof Region if tag==1, local(lvls)
+foreach x of local lvls {
+ 
+ summ angleReg if Region== "`x'" & tag==1, meanonly
+ 
+ local labReg `labReg' (scatter yReg xReg if Region== "`x'" & tag==1, mc(none) mlabel(Region) mlabangle(`r(mean)')  mlabpos(0) mlabsize(1.8))  ||
+ 
+}  
+ 
+twoway ///
+ (pcspike yval xval ycir xcir, lw(0.7) ) ///  
+ (pcspike yval1 xval1 ycir xcir, lw(0.7) ) ///  
+ (pcspike yval2 xval2 ycir xcir, lw(0.7) ) ///  
+ (pcspike yval3 xval3 ycir xcir, lw(0.7) ) ///  
+ (pcspike yval4 xval4 ycir xcir, lw(0.7) ) ///
+ `labs2' ///
+ `labReg' ///
+  , ///
+  xlabel(-$edge $edge, nogrid) ///
+  ylabel(-$edge $edge, nogrid) ///
+   ///
+  aspect(1) xsize(1) ysize(1) ///
+  yscale(off) xscale(off) ///
+  legend(order(1 "Hispanic" 2 "European" 3 "Muslim" 4 "Asian" 5 "Other") pos(6) rows(1) size(vsmall)) ///
+  text( 150 0 "{fontface Playfair Display Bold:U.S. Immigration:}", box just(center) fcolor(none) lw(none) color("233 236 96")) ///
+  text(-10 0 "Immgirants per 1000 by origin" "and destiny for 2022", size(1.5) box just(center) margin(t+2 b+2) fcolor(none) lw(none) color("233 236 96")) ///
+  text(-120 0 "#30DayChartChallenge", size(1.5) box just(center) margin(t+2 b+2) fcolor(none) lw(none) color("233 236 96")) ///
+  scheme(neon) ///
+note("{fontface Source Sans Pro Bold:Day 8: Circular}", pos(11) lwidth(0) size(vsmall) color(white)) name(Day8, replace) saving(Day8.png, replace)
+  
